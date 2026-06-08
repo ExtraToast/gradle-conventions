@@ -1,5 +1,6 @@
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.Test
 
 plugins {
@@ -51,6 +52,17 @@ publishing {
             }
         }
     }
+}
+
+// Publish ONLY the consolidated `dev.extratoast:gradle-conventions` jar — not the
+// per-plugin marker artifacts that `java-gradle-plugin` auto-creates. Markers are
+// named `<pluginId>:<pluginId>.gradle.plugin`, which GitHub Packages renders as an
+// ugly doubled name (e.g. dev.extratoast.kotlin.dev.extratoast.kotlin.gradle.plugin)
+// and clutters the package list. Consumers resolve plugin ids to this single jar via
+// `pluginManagement.resolutionStrategy.eachPlugin` (see README), so markers are
+// unnecessary.
+tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf { publication.name == "pluginMaven" }
 }
 
 fun Project.releasePleaseVersion(): String {
