@@ -78,6 +78,8 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
                 minimum = "0.80".toBigDecimal()
             }
         }
@@ -97,5 +99,5 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.check {
-    dependsOn(integrationTest)
+    dependsOn(integrationTest, tasks.jacocoTestCoverageVerification)
 }

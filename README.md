@@ -10,7 +10,7 @@ Gradle convention plugins for ExtraToast projects, published to GitHub Packages.
 | `dev.extratoast.detekt` | Detekt with defaults layered on, `allRules = false`, and a configurable config path defaulting to `config/detekt/detekt.yml`. |
 | `dev.extratoast.ktlint` | Ktlint with Android mode disabled and generated/build output excluded. |
 | `dev.extratoast.spring` | Kotlin conventions, Kotlin Spring, Spring Boot, Spring dependency management, shared BOMs, and standard Spring service dependencies. |
-| `dev.extratoast.testing` | Java, Jacoco, test logging, an `integrationTest` source set and task, aggregate reports, and an 80% coverage verification rule. |
+| `dev.extratoast.testing` | Java, Jacoco, test logging, an `integrationTest` source set and task, aggregate reports, and an 80% LINE coverage verification rule. |
 | `dev.extratoast.test-logging` | Verbose test logging and a suite-level result summary. |
 | `dev.extratoast.jooq-codegen` | A `generateJooq` task using jOOQ DDLDatabase against Flyway SQL migrations, plus generated source wiring. |
 
