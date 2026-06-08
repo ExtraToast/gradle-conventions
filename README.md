@@ -16,16 +16,36 @@ Gradle convention plugins for ExtraToast projects, published to GitHub Packages.
 
 ## Consumption
 
-Add the GitHub Packages Maven repository to `pluginManagement` in the consuming
-repo's `settings.gradle.kts`:
+Each convention plugin is published as its own Maven module:
 
-Only the single consolidated jar `dev.extratoast:gradle-conventions` is published
-(no per-plugin marker artifacts). Map the `dev.extratoast.*` plugin ids to that
-jar with `resolutionStrategy.eachPlugin` in the consuming repo's
-`settings.gradle.kts`:
+| Plugin ID | Maven coordinate |
+| --- | --- |
+| `dev.extratoast.kotlin` | `dev.extratoast:gradle-conventions-kotlin:<version>` |
+| `dev.extratoast.detekt` | `dev.extratoast:gradle-conventions-detekt:<version>` |
+| `dev.extratoast.ktlint` | `dev.extratoast:gradle-conventions-ktlint:<version>` |
+| `dev.extratoast.spring` | `dev.extratoast:gradle-conventions-spring:<version>` |
+| `dev.extratoast.testing` | `dev.extratoast:gradle-conventions-testing:<version>` |
+| `dev.extratoast.test-logging` | `dev.extratoast:gradle-conventions-test-logging:<version>` |
+| `dev.extratoast.jooq-codegen` | `dev.extratoast:gradle-conventions-jooq-codegen:<version>` |
+
+The aggregate module `dev.extratoast:gradle-conventions:<version>` is also
+published for projects that intentionally want the full set.
+
+Add the GitHub Packages Maven repository and map each plugin id to its module in
+the consuming repo's `settings.gradle.kts`:
 
 ```kotlin
 pluginManagement {
+    val extratoastConventionModules = mapOf(
+        "dev.extratoast.kotlin" to "gradle-conventions-kotlin",
+        "dev.extratoast.detekt" to "gradle-conventions-detekt",
+        "dev.extratoast.ktlint" to "gradle-conventions-ktlint",
+        "dev.extratoast.spring" to "gradle-conventions-spring",
+        "dev.extratoast.testing" to "gradle-conventions-testing",
+        "dev.extratoast.test-logging" to "gradle-conventions-test-logging",
+        "dev.extratoast.jooq-codegen" to "gradle-conventions-jooq-codegen",
+    )
+
     repositories {
         gradlePluginPortal()
         mavenCentral()
@@ -44,8 +64,8 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id.startsWith("dev.extratoast.")) {
-                useModule("dev.extratoast:gradle-conventions:${requested.version}")
+            extratoastConventionModules[requested.id.id]?.let { module ->
+                useModule("dev.extratoast:$module:${requested.version}")
             }
         }
     }
@@ -53,18 +73,19 @@ pluginManagement {
 ```
 
 Then apply the needed plugins in `build.gradle.kts` (version is the
-`gradle-conventions` release, e.g. `0.1.1`):
+`gradle-conventions` release, e.g. `0.2.0`):
 
 ```kotlin
 plugins {
-    id("dev.extratoast.kotlin") version "0.1.1"
-    id("dev.extratoast.detekt") version "0.1.1"
-    id("dev.extratoast.ktlint") version "0.1.1"
+    id("dev.extratoast.kotlin") version "0.2.0"
+    id("dev.extratoast.detekt") version "0.2.0"
+    id("dev.extratoast.ktlint") version "0.2.0"
 }
 ```
 
-GitHub Packages access requires credentials with package read access. Because no
-marker artifacts are published, the `eachPlugin` mapping above is required.
+GitHub Packages access requires credentials with package read access. No
+`*.gradle.plugin` marker artifacts are published, so the `eachPlugin` mapping
+above is required.
 
 ## Configuration
 

@@ -1,5 +1,5 @@
-# Publishes the convention-plugin marker artifacts to GitHub Packages when a
-# vX.Y.Z tag is pushed. Independent of release-please (whose GITHUB_TOKEN PR
+# Publishes the convention plugin modules and aggregate to GitHub Packages when
+# a vX.Y.Z tag is pushed. Independent of release-please (whose GITHUB_TOKEN PR
 # flow is blocked by the org "Actions may create PRs" setting); a maintainer
 # pushes the tag and this publishes that exact version.
 name: Publish

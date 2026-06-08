@@ -1,68 +1,71 @@
 import groovy.json.JsonSlurper
 import org.gradle.api.Project
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.api.tasks.testing.Test
-
-plugins {
-    `kotlin-dsl`
-    `maven-publish`
-}
 
 group = "dev.extratoast"
 version = releasePleaseVersion()
 
-repositories {
-    gradlePluginPortal()
-    mavenCentral()
-    maven("https://oss.sonatype.org/content/repositories/snapshots/")
-}
+val pluginProjectPaths =
+    setOf(
+        ":plugins:kotlin",
+        ":plugins:detekt",
+        ":plugins:ktlint",
+        ":plugins:spring",
+        ":plugins:testing",
+        ":plugins:test-logging",
+        ":plugins:jooq-codegen",
+    )
 
-dependencies {
-    // Detekt and Kotlin must bump together: Detekt's task init does a strict
-    // binary-compat check on the Kotlin compiler version it was built against.
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.21")
-    implementation("org.jetbrains.kotlin:kotlin-allopen:2.3.21")
-    implementation("org.springframework.boot:spring-boot-gradle-plugin:4.0.6")
-    implementation("dev.detekt:detekt-gradle-plugin:2.0.0-alpha.3")
-    implementation("org.jlleitschuh.gradle:ktlint-gradle:14.2.0")
-    implementation("io.spring.dependency-management:io.spring.dependency-management.gradle.plugin:1.1.7")
-    // jOOQ codegen, meta-extensions, and runtime overrides should stay aligned.
-    implementation("org.jooq:jooq-codegen:3.21.4")
-    implementation("org.jooq:jooq-meta-extensions:3.21.4")
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
 
-    testImplementation(gradleTestKit())
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
-    testImplementation(kotlin("test-junit5"))
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+    val moduleArtifactId =
+        when {
+            path == ":aggregate" -> "gradle-conventions"
+            path in pluginProjectPaths -> "gradle-conventions-$name"
+            else -> null
+        }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-}
-
-publishing {
     repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/ExtraToast/gradle-conventions")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+        gradlePluginPortal()
+        mavenCentral()
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
+
+    plugins.withId("maven-publish") {
+        extensions.configure<PublishingExtension>("publishing") {
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/ExtraToast/gradle-conventions")
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR")
+                        password = System.getenv("GITHUB_TOKEN")
+                    }
+                }
+            }
+
+            publications.withType(MavenPublication::class.java).configureEach {
+                if (moduleArtifactId != null && (project.path == ":aggregate" || name == "pluginMaven")) {
+                    artifactId = moduleArtifactId
+                }
             }
         }
     }
-}
 
-// Publish ONLY the consolidated `dev.extratoast:gradle-conventions` jar — not the
-// per-plugin marker artifacts that `java-gradle-plugin` auto-creates. Markers are
-// named `<pluginId>:<pluginId>.gradle.plugin`, which GitHub Packages renders as an
-// ugly doubled name (e.g. dev.extratoast.kotlin.dev.extratoast.kotlin.gradle.plugin)
-// and clutters the package list. Consumers resolve plugin ids to this single jar via
-// `pluginManagement.resolutionStrategy.eachPlugin` (see README), so markers are
-// unnecessary.
-tasks.withType<PublishToMavenRepository>().configureEach {
-    onlyIf { publication.name == "pluginMaven" }
+    if (path in pluginProjectPaths) {
+        tasks.withType(PublishToMavenRepository::class.java).configureEach {
+            onlyIf { publication.name == "pluginMaven" }
+        }
+    }
+
+    tasks.withType(Test::class.java).configureEach {
+        useJUnitPlatform()
+    }
 }
 
 fun Project.releasePleaseVersion(): String {
