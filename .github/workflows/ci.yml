@@ -14,6 +14,20 @@ permissions:
   contents: read
 
 jobs:
+  workflow-lint:
+    name: Workflow Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download actionlint
+        id: actionlint
+        shell: bash
+        run: bash <(curl --fail --silent --show-error --location https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+      - name: Lint GitHub Actions workflows
+        shell: bash
+        run: |
+          "${{ steps.actionlint.outputs.executable }}" -color .github/workflows/*.yml
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -47,7 +61,7 @@ jobs:
   pipeline-complete:
     name: Pipeline Complete
     if: always()
-    needs: [build, test]
+    needs: [workflow-lint, build, test]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all gating jobs succeeded
